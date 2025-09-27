@@ -30,7 +30,7 @@ export class ProductsModel {
   // Сохранить id выбранного товара (например, при клике по карточке)
   public setSelectedProduct(id: string | null) {
     this.selectedId = id;
-    this.events?.emit(EVENTS.SELECT_CHANGET, {}); // Уведомляем об изменении выбранного товара
+    this.events?.emit(EVENTS.SELECT_CHANGED, {}); // Уведомляем об изменении выбранного товара
   }
 
   // Получить сам объект выбранного товара

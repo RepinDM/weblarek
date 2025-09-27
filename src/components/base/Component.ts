@@ -18,6 +18,18 @@ export abstract class Component<T> {
         }
     }
 
+    // Установить текст элемента
+    protected setText(element: HTMLElement, text: string) {
+        if (element) {
+            element.textContent = text;
+        }
+    }
+
+    // Эмитировать событие
+    protected emit(event: string, data?: any) {
+        this.container.dispatchEvent(new CustomEvent(event, { detail: data }));
+    }
+
     // Вернуть корневой DOM-элемент
     render(data?: Partial<T>): HTMLElement {
         Object.assign(this as object, data ?? {});

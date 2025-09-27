@@ -10,12 +10,6 @@ type Step1Errors = { payment?: string; address?: string };
 type Step2Errors = { email?: string; phone?: string };
 
 export class BuyerModel {
-    getData(): any {
-        throw new Error("Method not implemented.");
-    }
-    clear() {
-        throw new Error("Method not implemented.");
-    }
     // Данные покупателя 
     private payment?: TPayment; // способ оплаты
     private address?: string; // адрес доставки
@@ -30,7 +24,7 @@ export class BuyerModel {
     //Установка способа оплаты 
     public setPayment(payment: TPayment) {
         this.payment = payment;
-        this.events?.emit(EVENTS.BUYER_CHANGET, {}); //Уведомляем подписчиков, что данные изменелись 
+        this.events?.emit(EVENTS.BUYER_CHANGED, {}); //Уведомляем подписчиков, что данные изменелись 
     }
     public getPayment(): TPayment | undefined {
         return this.payment;
@@ -39,7 +33,7 @@ export class BuyerModel {
     //Установка адреса 
     public setAddress(address: string) {
         this.address = address;
-        this.events?.emit(EVENTS.BUYER_CHANGET, {});
+        this.events?.emit(EVENTS.BUYER_CHANGED, {});
     }
     public getAddress(): string | undefined {
         return this.address;
@@ -48,7 +42,7 @@ export class BuyerModel {
     // Установка email
     public setEmail(email: string) {
         this.email = email;
-        this.events?.emit(EVENTS.BUYER_CHANGET, {});
+        this.events?.emit(EVENTS.BUYER_CHANGED, {});
     }
     public getEmail(): string | undefined {
         return this.email;
@@ -57,7 +51,7 @@ export class BuyerModel {
     // Установка телефона
     public setPhone(phone: string) {
         this.phone = phone;
-        this.events?.emit(EVENTS.BUYER_CHANGET, {})
+        this.events?.emit(EVENTS.BUYER_CHANGED, {})
     }
     public getPhone(): string | undefined {
         return this.phone;
@@ -65,28 +59,40 @@ export class BuyerModel {
 
     // Сброс данных покупателя (после оформления заказа)
     public reset() {
-        this.payment = "";
-        this.address = "";
-        this.email = "";
-        this.phone = "";
-        this.events?.emit(EVENTS.BUYER_CHANGET, {});
+        this.payment = undefined;
+        this.address = undefined;
+        this.email = undefined;
+        this.phone = undefined;
+        this.events?.emit(EVENTS.BUYER_CHANGED, {});
     }
 
      // Валидация 
-     // Проверка первого шага (оплата + адрес )
-     public validateStep1(): Step1Errors {
+     // Проверка первого шага (оплата + адрес)
+     // Возвращает объект с ошибками - удобно для отображения на форме
+    public validateStep1(): Step1Errors {
         const errors: Step1Errors = {};
         if (!this.payment) errors.payment = "Выберите способ оплаты" ;
         if (!this.address || !this.address.trim())
             errors.address = "Необходимо указать адрес";
         return errors;
-     }
+    }
 
      // Проверка второго шага (email + телефон)
-     public validateStep2(): Step2Errors {
+     // Возвращает объект с ошибками - удобно для отображения на форме
+    public validateStep2(): Step2Errors {
         const errors: Step2Errors = {};
         if (!this.email || !this.email.trim()) errors.email = "Укажите email";
         if (!this.phone || !this.phone.trim()) errors.phone = "Укажите телефон" ;
         return errors;
-     }
+    }
+
+    // Получить все данные покупателя в виде объекта
+    public getData() {
+        return {
+            payment: this.payment,
+            address: this.address,
+            email: this.email,
+            phone: this.phone
+        };
+    }
 }

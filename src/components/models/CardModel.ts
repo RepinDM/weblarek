@@ -49,8 +49,8 @@ export class CartModal {
     // Посчитать итоговую сумму заказа
     public getTotal(): number {
         return Array.from(this.items.values()).reduce((sum, p) => {
-            //Складываем цены, если цена - число, иначе добавляем 0
-            return sum + (typeof p.price === "number" ? p.price : 0);
+            // Складываем цены, если цена - число, иначе добавляем 0
+            return sum + (p.price ?? 0);
         }, 0);
     }
 }
