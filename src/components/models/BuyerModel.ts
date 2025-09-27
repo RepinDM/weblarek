@@ -10,6 +10,12 @@ type Step1Errors = { payment?: string; address?: string };
 type Step2Errors = { email?: string; phone?: string };
 
 export class BuyerModel {
+    getData(): any {
+        throw new Error("Method not implemented.");
+    }
+    clear() {
+        throw new Error("Method not implemented.");
+    }
     // Данные покупателя 
     private payment?: TPayment; // способ оплаты
     private address?: string; // адрес доставки
