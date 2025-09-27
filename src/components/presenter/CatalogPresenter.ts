@@ -5,16 +5,14 @@ import { EVENTS } from "../base/EventNames";
 
 export class CatalogPresenter {
     constructor(
-        private model: ProductsModel,
-        private view: Catalog,
-        private events: IEvents
+    private model: ProductsModel,
+    private view: Catalog,
+    private events: IEvents
     ) {
-        this.events.on(EVENTS.CATALOG_CHANGED, this.handleCatalogChange.bind(this));
+    this.events.on(EVENTS.CATALOG_CHANGED, this.updateView.bind(this));
     }
 
-
-
-    private handleCatalogChange() {
-        this.view.items = this.model.getItems();
+    private updateView() {
+    this.view.items = this.model.getItems();
     }
 }

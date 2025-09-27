@@ -1,100 +1,241 @@
-# Проектная работа "Веб-ларек"
+# Проектная работа "Веб-ларёк"
 
-Стек: HTML, SCSS, TS, Vite
+**Стек:** HTML, SCSS, TypeScript, Vite  
 
-Структура проекта:
-- src/ — исходные файлы проекта
-- src/components/ — папка с JS компонентами
-- src/components/base/ — папка с базовым кодом
+## Структура проекта
 
-Важные файлы:
-- index.html — HTML-файл главной страницы
-- src/types/index.ts — файл с типами
-- src/main.ts — точка входа приложения
-- src/scss/styles.scss — корневой файл стилей
-- src/utils/constants.ts — файл с константами
-- src/utils/utils.ts — файл с утилитами
+- `src/` — исходные файлы проекта  
+- `src/components/` — папка с компонентами интерфейса  
+- `src/components/Models/` — папка с моделями данных  
+- `src/components/base/` — базовый код (Component, Api, EventEmitter)  
+- `src/types/index.ts` — файл с типами данных  
+- `src/utils/constants.ts` — файл с константами  
+- `src/utils/data.ts` — тестовые данные для моделей  
+- `src/main.ts` — точка входа приложения  
+- `index.html` — HTML главной страницы  
+- `src/scss/styles.scss` — корневой файл стилей  
+
+---
 
 ## Установка и запуск
-Для установки и запуска проекта необходимо выполнить команды
 
-```
+Установка зависимостей и запуск проекта:
+
+```bash
 npm install
 npm run start
-```
+````
 
-или
+или через Yarn:
 
-```
+```bash
 yarn
 yarn start
 ```
-## Сборка
 
-```
+### Сборка проекта
+
+```bash
 npm run build
 ```
 
 или
 
-```
+```bash
 yarn build
 ```
+
+---
+
 # Интернет-магазин «Web-Larёk»
-«Web-Larёk» — это интернет-магазин с товарами для веб-разработчиков, где пользователи могут просматривать товары, добавлять их в корзину и оформлять заказы. Сайт предоставляет удобный интерфейс с модальными окнами для просмотра деталей товаров, управления корзиной и выбора способа оплаты, обеспечивая полный цикл покупки с отправкой заказов на сервер.
+
+«Web-Larёk» — интернет-магазин с товарами для веб-разработчиков.
+Пользователи могут просматривать товары, добавлять их в корзину, оформлять заказ с выбором способа оплаты и доставкой. Сайт использует модальные окна для работы с товарами и корзиной, обеспечивает валидацию данных пользователя и отправку заказов на сервер.
+
+---
 
 ## Архитектура приложения
 
-Код приложения разделен на слои согласно парадигме MVP (Model-View-Presenter), которая обеспечивает четкое разделение ответственности между классами слоев Model и View. Каждый слой несет свой смысл и ответственность:
+Применяемый паттерн: **MVP (Model-View-Presenter)**
 
-Model - слой данных, отвечает за хранение и изменение данных.  
-View - слой представления, отвечает за отображение данных на странице.  
-Presenter - презентер содержит основную логику приложения и  отвечает за связь представления и данных.
+* **Model** — хранение и управление данными (каталог товаров, корзина, покупатель).
+* **View** — представление, отвечает за отображение данных и модальные окна.
+* **Presenter** — связывает Model и View, обрабатывает события пользователя и логику приложения.
 
-Взаимодействие между классами обеспечивается использованием событийно-ориентированного подхода. Модели и Представления генерируют события при изменении данных или взаимодействии пользователя с приложением, а Презентер обрабатывает эти события используя методы как Моделей, так и Представлений.
+### Взаимодействие классов
 
-### Базовый код
+* Модели и представления используют события (EventEmitter).
+* Презентер подписывается на события моделей и представлений и выполняет действия (например, добавление товара в корзину или оформление заказа).
 
-#### Класс Component
-Является базовым классом для всех компонентов интерфейса.
-Класс является дженериком и принимает в переменной `T` тип данных, которые могут быть переданы в метод `render` для отображения.
+---
 
-Конструктор:  
-`constructor(container: HTMLElement)` - принимает ссылку на DOM элемент за отображение, которого он отвечает.
+## Типы данных (`types/index.ts`)
 
-Поля класса:  
-`container: HTMLElement` - поле для хранения корневого DOM элемента компонента.
+```ts
+export interface IShopItem {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  image: string;
+  price: number | null;
+}
 
-Методы класса:  
-`render(data?: Partial<T>): HTMLElement` - Главный метод класса. Он принимает данные, которые необходимо отобразить в интерфейсе, записывает эти данные в поля класса и возвращает ссылку на DOM-элемент. Предполагается, что в классах, которые будут наследоваться от `Component` будут реализованы сеттеры для полей с данными, которые будут вызываться в момент вызова `render` и записывать данные в необходимые DOM элементы.  
-`setImage(element: HTMLImageElement, src: string, alt?: string): void` - утилитарный метод для модификации DOM-элементов `<img>`
+export interface IBuyer {
+  payment: "card" | "cash" | "";
+  address: string;
+  email: string;
+  phone: string;
+}
 
+export interface IOrder {
+  items: string[];
+  payment: "card" | "cash";
+  address: string;
+  email: string;
+  phone: string;
+}
 
-#### Класс Api
-Содержит в себе базовую логику отправки запросов.
+export interface IOrderResponse {
+  id: string;
+  total: number;
+}
 
-Конструктор:  
-`constructor(baseUrl: string, options: RequestInit = {})` - В конструктор передается базовый адрес сервера и опциональный объект с заголовками запросов.
+export type EventName = string | RegExp;
+```
 
-Поля класса:  
-`baseUrl: string` - базовый адрес сервера  
-`options: RequestInit` - объект с заголовками, которые будут использованы для запросов.
+---
 
-Методы:  
-`get(uri: string): Promise<object>` - выполняет GET запрос на переданный в параметрах ендпоинт и возвращает промис с объектом, которым ответил сервер  
-`post(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<object>` - принимает объект с данными, которые будут переданы в JSON в теле запроса, и отправляет эти данные на ендпоинт переданный как параметр при вызове метода. По умолчанию выполняется `POST` запрос, но метод запроса может быть переопределен заданием третьего параметра при вызове.  
-`handleResponse(response: Response): Promise<object>` - защищенный метод проверяющий ответ сервера на корректность и возвращающий объект с данными полученный от сервера или отклоненный промис, в случае некорректных данных.
+## Базовые классы
 
-#### Класс EventEmitter
-Брокер событий реализует паттерн "Наблюдатель", позволяющий отправлять события и подписываться на события, происходящие в системе. Класс используется для связи слоя данных и представления.
+### Класс `Component`
 
-Конструктор класса не принимает параметров.
+Базовый класс для всех компонентов интерфейса.
 
-Поля класса:  
-`_events: Map<string | RegExp, Set<Function>>)` -  хранит коллекцию подписок на события. Ключи коллекции - названия событий или регулярное выражение, значения - коллекция функций обработчиков, которые будут вызваны при срабатывании события.
+* **Конструктор:** `constructor(container: HTMLElement)` — принимает корневой DOM элемент.
+* **Поля:** `container: HTMLElement` — корневой элемент компонента.
+* **Методы:**
 
-Методы класса:  
-`on<T extends object>(event: EventName, callback: (data: T) => void): void` - подписка на событие, принимает название события и функцию обработчик.  
-`emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
-`trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
+  * `render(data?: Partial<T>): HTMLElement` — отображает данные в интерфейсе;
+  * `setImage(element: HTMLImageElement, src: string, alt?: string): void` — утилитарный метод для `<img>`.
+
+### Класс `Api`
+
+Содержит базовую логику работы с сервером.
+
+* **Конструктор:** `constructor(baseUrl: string, options: RequestInit = {})`
+* **Поля:** `baseUrl`, `options`
+* **Методы:**
+
+  * `get(uri: string): Promise<object>` — GET-запрос;
+  * `post(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<object>` — POST-запрос;
+  * `handleResponse(response: Response): Promise<object>` — проверка ответа сервера.
+
+### Класс `EventEmitter`
+
+Реализует паттерн «Наблюдатель».
+
+* **Поля:** `_events: Map<string | RegExp, Set<Function>>` — хранит подписки на события.
+* **Методы:**
+
+  * `on<T extends object>(event: EventName, callback: (data: T) => void): void` — подписка на событие;
+  * `emit<T extends object>(event: string, data?: T): void` — генерация события;
+  * `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` — возвращает функцию генерации события.
+
+---
+
+## Классы моделей данных (`components/Models`)
+
+### 1. `Products` — каталог товаров
+
+* **Поля:**
+
+  * `items: IShopItem[]` — все товары
+  * `selectedItem: IShopItem | null` — выбранный товар для просмотра
+* **Методы:**
+
+  * `setItems(items: IShopItem[]): void`
+  * `getItems(): IShopItem[]`
+  * `getItemById(id: string): IShopItem | undefined`
+  * `setSelectedItem(item: IShopItem): void`
+  * `getSelectedItem(): IShopItem | null`
+
+### 2. `Basket` — корзина покупок
+
+* **Поля:** `items: IShopItem[]`
+* **Методы:**
+
+  * `getItems(): IShopItem[]`
+  * `addItem(item: IShopItem): void`
+  * `removeItem(item: IShopItem): void`
+  * `clear(): void`
+  * `getTotal(): number`
+  * `getCount(): number`
+  * `hasItem(id: string): boolean`
+
+### 3. `Buyer` — данные покупателя
+
+* **Поля:** `payment`, `address`, `email`, `phone`
+* **Методы:**
+
+  * `setField(field: keyof IBuyer, value: string): void`
+  * `getData(): IBuyer`
+  * `clear(): void`
+  * `validate(): Partial<Record<keyof IBuyer, string>>`
+
+---
+
+## Класс коммуникационного слоя (`api/LarekApi.ts`)
+
+```ts
+import { Api } from "../base/Api";
+import type { IShopItem, IOrder, IOrderResponse } from "../../types";
+
+export class LarekApi extends Api {
+  getProducts(): Promise<IShopItem[]> {
+    return this.get("/products") as Promise<IShopItem[]>;
+  }
+
+  postOrder(order: IOrder): Promise<IOrderResponse> {
+    return this.post("/order", order) as Promise<IOrderResponse>;
+  }
+}
+```
+
+---
+
+## Пример использования (`main.ts`)
+
+```ts
+import { LarekApi } from "./api/LarekApi";
+import { Basket } from "./components/Models/Basket";
+import type { IBuyer, IOrder } from "./types";
+
+const api = new LarekApi();
+const basket = new Basket();
+
+// Получение товаров
+api.getProducts().then(products => console.log("Каталог товаров:", products));
+
+// Пример оформления заказа
+const buyerData: IBuyer = {
+  payment: "card",
+  address: "ул. Пушкина, д. 1",
+  email: "user@example.com",
+  phone: "+79001234567",
+};
+
+const order: IOrder = {
+  items: basket.getItems().map(item => item.id),
+  payment: buyerData.payment,
+  address: buyerData.address,
+  email: buyerData.email,
+  phone: buyerData.phone,
+};
+
+api.postOrder(order).then(response => console.log("Заказ отправлен:", response));
+```
+
+---
+
 
