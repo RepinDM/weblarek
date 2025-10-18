@@ -1,12 +1,22 @@
-export class Component<T = any> {
-    constructor(protected container: HTMLElement) {}
 
-    render(data?: Partial<T>): HTMLElement {
-    return this.container;
+export class Component<T = any> {
+    protected container: HTMLElement;
+
+    constructor(container: HTMLElement) {
+        this.container = container;
     }
 
-    protected setImage(element: HTMLImageElement, src: string, alt?: string) {
-    element.src = src;
-    if (alt) element.alt = alt;
+    // Публичный аксессор для внешнего кода (презентеров) чтобы получить контейнер
+    public getContainer(): HTMLElement {
+        return this.container;
+    }
+
+    render(_data?: Partial<T>): HTMLElement {
+        return this.container;
+    }
+
+    protected setImage(img: HTMLImageElement, src: string, alt?: string) {
+        img.src = src;
+        if (alt) img.alt = alt;
     }
 }

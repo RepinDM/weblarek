@@ -10,7 +10,7 @@ export class ProductsModel {
 
   setItems(items: IShopItem[]) {
     this.items = items;
-    this.events?.emit(EVENTS.CATALOG_CHANGED, {});
+    this.events?.emit(EVENTS.CATALOG_CHANGED);
   }
 
   getItems(): IShopItem[] {
@@ -19,6 +19,7 @@ export class ProductsModel {
 
   setSelectedProduct(id: string | null) {
     this.selectedProductId = id;
+    this.events?.emit(EVENTS.PRODUCT_SELECTED, id ? this.getSelectedProduct() : null);
   }
 
   getSelectedProduct(): IShopItem | null {
