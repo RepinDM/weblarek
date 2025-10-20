@@ -2,11 +2,11 @@ export function pascalToKebab(value: string): string {
     return value.replace(/([a-z0–9])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
-export function isSelector(x: any): x is string {
+export function isSelector(x: unknown): x is string {
     return (typeof x === "string") && x.length > 1;
 }
 
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
     return value === null || value === undefined;
 }
 
@@ -31,7 +31,7 @@ export function ensureElement<T extends HTMLElement>(selectorElement: SelectorEl
     if (isSelector(selectorElement)) {
         const elements = ensureAllElements<T>(selectorElement, context);
         if (elements.length > 1) {
-            console.warn(`selector ${selectorElement} return more then one element`);
+            // Предупреждение: селектор возвращает более одного элемента
         }
         if (elements.length === 0) {
             throw new Error(`selector ${selectorElement} return nothing`);

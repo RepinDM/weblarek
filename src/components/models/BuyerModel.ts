@@ -1,40 +1,41 @@
 import type { IEvents } from "../base/Events";
 import { EVENTS } from "../base/EventNames";
+import type { TPayment } from "../../types";
 
 export class BuyerModel {
-    private payment: "card" | "cash" | "" = "";
+    private payment: TPayment | "" = "";
     private address: string = "";
     private email: string = "";
     private phone: string = "";
 
     constructor(private events?: IEvents) {}
 
-    setPayment(method: "card" | "cash" | "") {
+    setPayment(method: TPayment | ""): void {
         this.payment = method;
         this.events?.emit(EVENTS.BUYER_CHANGED);
     }
 
-    setAddress(address: string) {
+    setAddress(address: string): void {
         this.address = address;
         this.events?.emit(EVENTS.BUYER_CHANGED);
     }
 
-    setEmail(email: string) {
+    setEmail(email: string): void {
         this.email = email;
         this.events?.emit(EVENTS.BUYER_CHANGED);
     }
 
-    setPhone(phone: string) {
+    setPhone(phone: string): void {
         this.phone = phone;
         this.events?.emit(EVENTS.BUYER_CHANGED);
     }
 
-    getPayment() { return this.payment; }
-    getAddress() { return this.address; }
-    getEmail() { return this.email; }
-    getPhone() { return this.phone; }
+    getPayment(): TPayment | "" { return this.payment; }
+    getAddress(): string { return this.address; }
+    getEmail(): string { return this.email; }
+    getPhone(): string { return this.phone; }
 
-    reset() {
+    reset(): void {
         this.payment = "";
         this.address = "";
         this.email = "";
@@ -42,14 +43,14 @@ export class BuyerModel {
         this.events?.emit(EVENTS.BUYER_CHANGED);
     }
 
-    validateStep1() {
+    validateStep1(): Record<string, string> {
         const errors: Record<string, string> = {};
         if (!this.payment) errors.payment = "Выберите способ оплаты";
         if (!this.address) errors.address = "Введите адрес доставки";
         return errors;
     }
 
-    validateStep2() {
+    validateStep2(): Record<string, string> {
         const errors: Record<string, string> = {};
         if (!this.email) errors.email = "Введите email";
         if (!this.phone) errors.phone = "Введите телефон";

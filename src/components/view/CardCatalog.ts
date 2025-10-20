@@ -1,41 +1,50 @@
-import { CardBase } from "./CardBase";
+// src/components/view/CardCatalog.ts
+import { Component } from "../base/Component";
 import { categoryMap } from "../../utils/constants";
+import type { IShopItem } from "../../types";
+import type { IEvents } from "../base/Events";
+import { EVENTS } from "../base/EventNames";
 
-type CategoryKey = keyof typeof categoryMap;
+/**
+ * CardCatalog — рендерит карточку товара и эмитит событие при клике.
+ * Сигнатура render согласована с Component: render(data?: Partial<T>)
+ */
+export class CardCatalog extends Component<IShopItem> {
+    constructor(container: HTMLElement, private events?: IEvents) {
+    super(container);
+    }
 
-interface CatalogItem {
-    title: string;
-    price: number | null;
-    image?: string | null;
-    category: CategoryKey | string;
-    [key: string]: any;
-}
+    render(data?: Partial<IShopItem>): HTMLElement {
+    const item = data as IShopItem | undefined;
+    const tpl = document.querySelector<HTMLTemplateElement>('#card-catalog')!;
+    const el = tpl.content.firstElementChild!.cloneNode(true) as HTMLElement;
 
-export class CardCatalog extends CardBase {
-    render(data: CatalogItem) {
-        const tpl = document.querySelector<HTMLTemplateElement>('#card-catalog')!;
-        const el = tpl.content.firstElementChild!.cloneNode(true) as HTMLElement;
-
-        const title = el.querySelector('.card__title') as HTMLElement;
-        const price = el.querySelector('.card__price') as HTMLElement;
-        const img = el.querySelector('.card__image') as HTMLImageElement;
-        const category = el.querySelector('.card__category') as HTMLElement;
-
-        title.textContent = data.title;
-        price.textContent = data.price === null ? 'Бесплатно' : `${data.price} синапсов`;
-    img.src = data.image ?? '';
-    img.alt = data.title ?? '';
-    // модификатор
-    const modifier = categoryMap[data.category as CategoryKey] || 'card__category_other';
-        category.className = `card__category ${modifier}`;
-        category.textContent = data.category;
-
-    // сделать всю карточку кликабельной
-        el.addEventListener('click', () => {
-        const ev = new CustomEvent('card:click', { detail: data });
-        el.dispatchEvent(ev);
-        });
-
+    if (!item) {
+      // если данных нет — вернуть пустую карточку
         return el;
+    }
+
+    const title = el.querySelector('.card__title') as HTMLElement;
+    const price = el.querySelector('.card__price') as HTMLElement;
+    const img = el.querySelector('.card__image') as HTMLImageElement;
+    const category = el.querySelector('.card__category') as HTMLElement;
+
+    title.textContent = item.title;
+    price.textContent = item.price === null ? 'Бесплатно' : `${item.price} синапсов`;
+    img.src = item.image || '';
+    img.alt = item.title ?? '';
+
+    const modifier = categoryMap[item.category as keyof typeof categoryMap] || 'card__category_other';
+    category.className = `card__category ${modifier}`;
+    category.textContent = item.category;
+
+    el.dataset.id = item.id;
+
+    el.addEventListener('click', () => {
+      // эмитим весь объект товара (Presenter решит что делать)
+        this.events?.emit(EVENTS.PRODUCT_SELECTED, item);
+    });
+
+    return el;
     }
 }

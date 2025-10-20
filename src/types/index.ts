@@ -11,10 +11,15 @@ export interface IShopItem {
 }
 
   // ---------------------------
+  // Тип способа оплаты
+  // ---------------------------
+export type TPayment = "card" | "cash";
+
+  // ---------------------------
   // Данные покупателя (форма)
   // ---------------------------
 export interface IBuyer {
-    payment: "card" | "cash" | "";
+    payment: TPayment | "";
     address: string;
     email: string;
     phone: string;
@@ -25,7 +30,7 @@ export interface IBuyer {
   // ---------------------------
 export interface IOrder {
     items: string[]; // список id товаров
-    payment: "card" | "cash";
+    payment: TPayment;
     address: string;
     email: string;
     phone: string;
@@ -37,6 +42,22 @@ export interface IOrder {
 export interface IOrderResponse {
     id: string;     // id заказа
     total: number;  // сумма заказа
+}
+
+  // ---------------------------
+  // Типы для событий
+  // ---------------------------
+export interface ICartCounterEvent {
+  count: number;
+}
+
+export interface IBuyerChangedEvent {
+  field: keyof IBuyer;
+  value: string;
+}
+
+export interface IProductSelectedEvent {
+  id: string;
 }
 
   // ---------------------------

@@ -12,19 +12,19 @@ export class CartModel {
         return Array.from(this.items.values());
     }
 
-    add(product: IShopItem) {
+    add(product: IShopItem): void {
         if (!product?.id) return;
         if (product.price === null) return;
         this.items.set(product.id, product);
         this.events?.emit(EVENTS.CART_CHANGED);
     }
 
-    remove(id: string) {
+    remove(id: string): void {
         this.items.delete(id);
         this.events?.emit(EVENTS.CART_CHANGED);
     }
 
-    clear() {
+    clear(): void {
         if (this.items.size) {
         this.items.clear();
         this.events?.emit(EVENTS.CART_CHANGED);

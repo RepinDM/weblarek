@@ -1,5 +1,5 @@
 
-export class Component<T = any> {
+export class Component<T = unknown> {
     protected container: HTMLElement;
 
     constructor(container: HTMLElement) {

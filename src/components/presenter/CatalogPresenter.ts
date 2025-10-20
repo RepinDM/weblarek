@@ -1,30 +1,38 @@
 // src/components/presenter/CatalogPresenter.ts
 import { ProductsModel } from "../models/ProductsModal";
 import { Catalog } from "../view/Catalog";
-import { IEvents } from "../base/Events";
+import { CardCatalog } from "../view/CardCatalog";
+import type { IEvents } from "../base/Events";
 import { EVENTS } from "../base/EventNames";
+import type { IShopItem } from "../../types";
 
+/**
+ * Presenter не работает с DOM напрямую.
+ * Он создаёт view-элементы карточек (через CardCatalog.render)
+ * и отдаёт их в Catalog.render.
+ */
 export class CatalogPresenter {
     constructor(
-        private model: ProductsModel,
-        private view: Catalog,
-        private events: IEvents
+    private model: ProductsModel,
+    private view: Catalog,
+    private events: IEvents
     ) {
-        this.events.on(EVENTS.CATALOG_CHANGED, this.updateView.bind(this));
-    // делегируем клики от каталога (всплытие событий)
-        this.view.getContainer().addEventListener('click', (e) => {
-            const target = e.target as HTMLElement;
-            const btn = target.closest('.card') as HTMLElement | null;
-            if (!btn) return;
-            const id = btn.dataset.id;
-            if (id) {
-                this.model.setSelectedProduct(id);
-            }
-        });
+    this.events.on(EVENTS.CATALOG_CHANGED, this.updateView.bind(this));
+
+    // реакция на выбор продукта (view эмитит EVENTS.PRODUCT_SELECTED)
+    this.events.on(EVENTS.PRODUCT_SELECTED, (item?: IShopItem) => {
+        if (!item) return;
+        this.model.setSelectedProduct(item.id);
+    });
     }
 
     private updateView() {
-        this.view.items = this.model.getItems();
+    const items = this.model.getItems();
+    const elements: HTMLElement[] = items.map(item => {
+        const container = document.createElement('div');
+        const card = new CardCatalog(container, this.events);
+        return card.render(item);
+    });
+    this.view.render(elements);
     }
 }
-

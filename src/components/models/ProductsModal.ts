@@ -8,7 +8,7 @@ export class ProductsModel {
 
   constructor(private events?: IEvents) {}
 
-  setItems(items: IShopItem[]) {
+  setItems(items: IShopItem[]): void {
     this.items = items;
     this.events?.emit(EVENTS.CATALOG_CHANGED);
   }
@@ -17,7 +17,7 @@ export class ProductsModel {
     return this.items;
   }
 
-  setSelectedProduct(id: string | null) {
+  setSelectedProduct(id: string | null): void {
     this.selectedProductId = id;
     this.events?.emit(EVENTS.PRODUCT_SELECTED, id ? this.getSelectedProduct() : null);
   }

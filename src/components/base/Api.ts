@@ -7,29 +7,29 @@ export class Api {
         protected options: RequestInit = {}
     ) {}
 
-    protected handleResponse(response: Response): Promise<any> {
+    protected handleResponse<T>(response: Response): Promise<T> {
         if (!response.ok) {
-        return Promise.reject(`Ошибка: ${response.status}`);
+            return Promise.reject(`Ошибка: ${response.status}`);
         }
-        return response.json();
+        return response.json() as Promise<T>;
     }
 
-    public get(uri: string): Promise<any> {
+    public get<T>(uri: string): Promise<T> {
         return fetch(`${this.baseUrl}${uri}`, {
-        ...this.options,
-        method: 'GET',
-        }).then(this.handleResponse);
+            ...this.options,
+            method: 'GET',
+        }).then(res => this.handleResponse<T>(res));
     }
 
-    public post(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<any> {
+    public post<T>(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<T> {
         return fetch(`${this.baseUrl}${uri}`, {
-        ...this.options,
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(this.options && (this.options as any).headers),
-        },
-        body: JSON.stringify(data),
-        }).then(this.handleResponse);
+            ...this.options,
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                ...(typeof this.options.headers === 'object' ? this.options.headers : {}),
+            },
+            body: JSON.stringify(data),
+        }).then(res => this.handleResponse<T>(res));
     }
 }
