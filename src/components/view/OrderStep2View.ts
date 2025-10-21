@@ -1,4 +1,4 @@
-// src/components/view/OrderStep2View.ts
+
 import { Component } from "../base/Component";
 import type { IBuyer, IBuyerChangedEvent } from "../../types";
 import type { IEvents } from "../base/Events";

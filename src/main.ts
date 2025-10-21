@@ -1,7 +1,7 @@
-// src/main.ts
+
 import "./scss/styles.scss";
 import { apiProducts } from "./utils/data";
-import { API_URL } from "./utils/constants";
+import { API_URL, CDN_URL } from "./utils/constants";
 
 import { EventEmitter } from "./components/base/Events";
 
@@ -61,11 +61,20 @@ events.on<ICartCounterEvent>('cart:counter', (data?: ICartCounterEvent) => {
 async function loadProducts() {
   try {
     const products = await api.getProducts();
-    productsModel.setItems(products);
+    // Добавляем CDN URL к изображениям товаров
+    const productsWithCDN = products.map(product => ({
+      ...product,
+      image: product.image ? `${CDN_URL}/${product.image}` : product.image
+    }));
+    productsModel.setItems(productsWithCDN);
   } catch (error) {
     console.error('Ошибка загрузки товаров:', error);
     // Fallback на демо-данные в случае ошибки
-    productsModel.setItems(apiProducts.items as IShopItem[]);
+    const fallbackProducts = (apiProducts.items as IShopItem[]).map(product => ({
+      ...product,
+      image: product.image ? `${CDN_URL}/${product.image}` : product.image
+    }));
+    productsModel.setItems(fallbackProducts);
   }
 }
 

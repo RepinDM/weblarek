@@ -3,7 +3,7 @@ import type { IShopItem, IOrder, IOrderResponse } from "../../types";
 
 export class LarekApi extends Api {
   // Получение списка товаров
-  getProducts(): Promise<IShopItem[]> {
+  async getProducts(): Promise<IShopItem[]> {
     return this.get<IShopItem[]>("/products");
   }
 

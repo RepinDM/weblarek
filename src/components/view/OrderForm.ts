@@ -1,4 +1,4 @@
-// src/components/view/OrderForm.ts
+
 import { Component } from "../base/Component";
 import type { IBuyer } from "../../types";
 

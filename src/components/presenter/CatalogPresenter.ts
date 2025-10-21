@@ -1,4 +1,4 @@
-// src/components/presenter/CatalogPresenter.ts
+
 import { ProductsModel } from "../models/ProductsModal";
 import { Catalog } from "../view/Catalog";
 import { CardCatalog } from "../view/CardCatalog";
@@ -19,8 +19,8 @@ export class CatalogPresenter {
     ) {
     this.events.on(EVENTS.CATALOG_CHANGED, this.updateView.bind(this));
 
-    // реакция на выбор продукта (view эмитит EVENTS.PRODUCT_SELECTED)
-    this.events.on(EVENTS.PRODUCT_SELECTED, (item?: IShopItem) => {
+    // реакция на превью продукта (view эмитит EVENTS.PRODUCT_PREVIEW)
+    this.events.on(EVENTS.PRODUCT_PREVIEW, (item?: IShopItem) => {
         if (!item) return;
         this.model.setSelectedProduct(item.id);
     });

@@ -1,4 +1,4 @@
-// src/components/view/Catalog.ts
+
 import { Component } from "../base/Component";
 
 /**

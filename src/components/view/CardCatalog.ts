@@ -1,4 +1,4 @@
-// src/components/view/CardCatalog.ts
+
 import { Component } from "../base/Component";
 import { categoryMap } from "../../utils/constants";
 import type { IShopItem } from "../../types";
@@ -41,8 +41,8 @@ export class CardCatalog extends Component<IShopItem> {
     el.dataset.id = item.id;
 
     el.addEventListener('click', () => {
-      // эмитим весь объект товара (Presenter решит что делать)
-        this.events?.emit(EVENTS.PRODUCT_SELECTED, item);
+      // эмитим событие для открытия превью товара
+        this.events?.emit(EVENTS.PRODUCT_PREVIEW, item);
     });
 
     return el;

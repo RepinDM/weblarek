@@ -3,7 +3,7 @@ import { CartModel } from "../models/CardModel";
 import { BasketView } from "../view/BasketView";
 import type { IEvents } from "../base/Events";
 import { EVENTS } from "../base/EventNames";
-import { IShopItem, ICartCounterEvent } from "../../types";
+import { ICartCounterEvent } from "../../types";
 
 /**
  * BasketPresenter слушает изменения в CartModel и обновляет BasketView.
@@ -20,8 +20,8 @@ export class BasketPresenter {
     }
 
     private handleCartChange() {
-    const items: IShopItem[] = this.model.getItems();
-    const total: number = this.model.getTotal();
+    const items = this.model.getItems();
+    const total = this.model.getTotal();
     // обновляем view через метод render(data)
     this.view.render({ items, total });
     // обновляем счётчик в шапке через глобальное событие

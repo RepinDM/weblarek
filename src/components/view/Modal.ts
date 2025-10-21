@@ -1,4 +1,4 @@
-// src/components/view/Modal.ts
+
 import { Component } from "../base/Component";
 
 export class Modal extends Component<{ active?: boolean }> {

@@ -1,9 +1,9 @@
-// src/components/view/BasketView.ts
+
 import { Component } from "../base/Component";
-import type { IShopItem } from "../../types";
 import type { IEvents } from "../base/Events";
-import { BasketItemView } from "./BasketItemView";
 import { EVENTS } from "../base/EventNames";
+import { BasketItemView } from "./BasketItemView";
+import type { IShopItem } from "../../types";
 
 /**
  * BasketView: принимает данные в render и ничего не хранит лишнего.
@@ -36,9 +36,7 @@ export class BasketView extends Component<{ items: IShopItem[]; total: number; b
         // используем отдельное представление для каждой карточки
         const itemContainer = document.createElement('div');
         const itemView = new BasketItemView(itemContainer, this.events);
-        const itemEl = itemView.render(item);
-        // корректируем индекс в шаблоне:
-        itemEl.querySelector('.basket__item-index')!.textContent = String(idx + 1);
+        const itemEl = itemView.render({ ...item, index: idx + 1 });
         list.appendChild(itemEl);
         });
         btn.disabled = false;

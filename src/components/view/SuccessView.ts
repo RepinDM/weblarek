@@ -1,4 +1,4 @@
-// src/components/view/SuccessView.ts
+
 import { Component } from "../base/Component";
 import type { IEvents } from "../base/Events";
 import { EVENTS } from "../base/EventNames";
