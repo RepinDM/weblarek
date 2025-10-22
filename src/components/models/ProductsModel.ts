@@ -19,7 +19,7 @@ export class ProductsModel {
 
   setSelectedProduct(id: string | null): void {
     this.selectedProductId = id;
-    this.events?.emit(EVENTS.PRODUCT_SELECTED, id ? this.getSelectedProduct() : null);
+    // УДАЛЕНО: эмиттирование события PRODUCT_SELECTED
   }
 
   getSelectedProduct(): IShopItem | null {

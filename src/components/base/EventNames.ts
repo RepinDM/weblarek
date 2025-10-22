@@ -1,7 +1,5 @@
-
 export const EVENTS = {
     CATALOG_CHANGED: "catalog:changed",
-    PRODUCT_SELECTED: "product:selected",
     PRODUCT_PREVIEW: "product:preview",
     CART_CHANGED: "cart:changed",
     BASKET_OPEN: "basket:open",

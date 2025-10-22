@@ -41,9 +41,8 @@ export class CardCatalog extends Component<IShopItem> {
     el.dataset.id = item.id;
 
     el.addEventListener('click', () => {
-      // эмитим событие для открытия превью товара
-        this.events?.emit(EVENTS.PRODUCT_PREVIEW, item);
-    });
+    this.events?.emit(EVENTS.PRODUCT_PREVIEW , item); 
+});
 
     return el;
     }

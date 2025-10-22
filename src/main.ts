@@ -1,11 +1,10 @@
-
 import "./scss/styles.scss";
 import { apiProducts } from "./utils/data";
 import { API_URL, CDN_URL } from "./utils/constants";
 
 import { EventEmitter } from "./components/base/Events";
 
-import { ProductsModel } from "./components/models/ProductsModal";
+import { ProductsModel } from "./components/models/ProductsModel";
 import { CartModel } from "./components/models/CardModel";
 import { BuyerModel } from "./components/models/BuyerModel";
 import { LarekApi } from "./components/models/LarekApi";
@@ -16,6 +15,7 @@ import { Modal } from "./components/view/Modal";
 import { OrderStep1View } from "./components/view/OrderStep1View";
 import { OrderStep2View } from "./components/view/OrderStep2View";
 import { SuccessView } from "./components/view/SuccessView";
+import { CardPreview } from "./components/view/CardPreview";
 
 import { CatalogPresenter } from "./components/presenter/CatalogPresenter";
 import { BasketPresenter } from "./components/presenter/BasketPresenter";
@@ -52,7 +52,7 @@ const successView = new SuccessView(document.createElement('div'), events);
 new CatalogPresenter(productsModel, catalogView, events);
 new BasketPresenter(cartModel, basketView, events);
 
-// header counter update
+// обновление счетчика header 
 events.on<ICartCounterEvent>('cart:counter', (data?: ICartCounterEvent) => {
   headerCounter.textContent = String(data?.count ?? 0);
 });
@@ -80,7 +80,32 @@ async function loadProducts() {
 
 loadProducts();
 
-// open basket on header button click
+// Обработка открытия превью товара
+events.on(EVENTS.PRODUCT_PREVIEW, (item?: IShopItem) => {
+  if (!item) return;
+  
+  // Создаем представление для превью
+  const previewContainer = document.createElement('div');
+  const cartItemsSet = new Set(cartModel.getItems().map(i => i.id));
+  const cardPreview = new CardPreview(previewContainer, events, cartItemsSet);
+  const previewElement = cardPreview.render(item);
+  
+  // Устанавливаем контент в модальное окно и открываем его
+  modal.setContent(previewElement);
+  modal.open();
+});
+
+// Обработка добавления товара в корзину из превью
+events.on(EVENTS.CARD_ADD, (item?: IShopItem) => {
+  if (item) {
+    cartModel.add(item);
+    // Закрываем модальное окно после добавления
+    modal.close();
+  }
+});
+
+
+// откройте корзину, нажав на кнопку в шапке
 headerBasketBtn.addEventListener('click', () => {
   const items = cartModel.getItems();
   const total = cartModel.getTotal();
@@ -89,15 +114,15 @@ headerBasketBtn.addEventListener('click', () => {
   modal.open();
 });
 
-// remove item (emitted by BasketItemView)
+// удалить товар из корзины (вызвано из BasketItemView)
 events.on(EVENTS.CARD_REMOVE, (id?: string) => {
   if (!id) return;
   cartModel.remove(id);
 });
 
-// start checkout (emitted by BasketView)
+// начало оформления заказа (вызывается BasketView)
 events.on(EVENTS.BASKET_CHECKOUT, () => {
-  // render step1
+  // шаг 1 рендеринга
   const step1El = step1View.render({
     address: buyerModel.getAddress(),
     payment: buyerModel.getPayment()
@@ -105,7 +130,7 @@ events.on(EVENTS.BASKET_CHECKOUT, () => {
   modal.setContent(step1El);
   modal.open();
 
-  // step1 next
+  // шаг 1 следующий
   events.on('order:step1:next', () => {
     const errs = buyerModel.validateStep1();
     if (Object.keys(errs).length) {
@@ -118,7 +143,7 @@ events.on(EVENTS.BASKET_CHECKOUT, () => {
       return;
     }
 
-    // render step2
+    // шаг 2 рендеринга
     const step2El = step2View.render({
       email: buyerModel.getEmail(),
       phone: buyerModel.getPhone()
@@ -136,13 +161,13 @@ events.on(EVENTS.BASKET_CHECKOUT, () => {
     if (field === 'phone') buyerModel.setPhone(value);
   });
 
-  // step2 validation request (toggle pay button)
+  // данные о покупателе изменились (на этапах 1 и 2)
   events.on('order:step2:validate', () => {
     const errs = buyerModel.validateStep2();
     events.emit('order:step2:setButton', Object.keys(errs).length === 0);
   });
 
-  // submit order
+  // отправить заказ
   events.on('order:submit', async () => {
     const errs = buyerModel.validateStep2();
     if (Object.keys(errs).length) {
@@ -170,13 +195,14 @@ events.on(EVENTS.BASKET_CHECKOUT, () => {
       const successEl = successView.render({ total: res.total ?? 0 });
       modal.setContent(successEl);
     } catch (err) {
+      console.error('Ошибка при оформлении заказа:', err);
       // В случае ошибки показываем окно успешного завершения с нулевой суммой
       const successEl = successView.render({ total: 0 });
       modal.setContent(successEl);
     }
   });
 
-  // close on success
+  //  к успеху
   events.on(EVENTS.ORDER_SUBMITTED, () => {
     modal.close();
   });
