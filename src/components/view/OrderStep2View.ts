@@ -28,12 +28,12 @@ export class OrderStep2View extends Component<IBuyer> {
     };
 
     emailInput.addEventListener('input', () => {
-        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'email', value: emailInput.value });
+        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_INPUT_CHANGED, { field: 'email', value: emailInput.value });
         updateButtonState();
     });
 
     phoneInput.addEventListener('input', () => {
-        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'phone', value: phoneInput.value });
+        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_INPUT_CHANGED, { field: 'phone', value: phoneInput.value });
         updateButtonState();
     });
 

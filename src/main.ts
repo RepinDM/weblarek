@@ -211,9 +211,9 @@ events.on(EVENTS.BASKET_CHECKOUT, () => {
   modal.open();
 });
 
-// buyer data changes (from step1/step2 views)
-events.on<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, (payload?: IBuyerChangedEvent) => {
-  if (!payload || !payload.field) return;
+// buyer input changes (from step1/step2 views)
+events.on<IBuyerChangedEvent>(EVENTS.BUYER_INPUT_CHANGED, (payload?: IBuyerChangedEvent) => {
+  if (!payload) return;
   const { field, value } = payload;
   if (field === 'payment') buyerModel.setPayment(value as IBuyer['payment']);
   if (field === 'address') buyerModel.setAddress(value);
@@ -253,7 +253,7 @@ events.on('order:submit', async () => {
     const res = await withTimeout(api.postOrder(order), ORDER_SUBMIT_TIMEOUT);
     showOrderSuccess(res.total ?? orderTotal);
   } catch {
-    showOrderSuccess(orderTotal);
+    renderOrderStep2({ submit: 'Не удалось оформить заказ. Проверьте соединение и попробуйте ещё раз.' });
   }
 });
 

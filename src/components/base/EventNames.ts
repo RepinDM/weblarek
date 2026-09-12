@@ -7,5 +7,6 @@ export const EVENTS = {
     CARD_ADD: "card:add",
     CARD_REMOVE: "card:remove",
     ORDER_SUBMITTED: "order:submitted",
+    BUYER_INPUT_CHANGED: "buyer:input-changed",
     BUYER_CHANGED: "buyer:changed",
 };

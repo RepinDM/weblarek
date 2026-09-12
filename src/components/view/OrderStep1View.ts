@@ -39,18 +39,18 @@ export class OrderStep1View extends Component<IBuyer> {
     };
 
     addressInput.addEventListener('input', () => {
-        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'address', value: addressInput.value });
+        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_INPUT_CHANGED, { field: 'address', value: addressInput.value });
         updateButtonState();
     });
 
     cardBtn.addEventListener('click', () => {
         updatePaymentState('card');
-        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'payment', value: 'card' });
+        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_INPUT_CHANGED, { field: 'payment', value: 'card' });
     });
 
     cashBtn.addEventListener('click', () => {
         updatePaymentState('cash');
-        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'payment', value: 'cash' });
+        this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_INPUT_CHANGED, { field: 'payment', value: 'cash' });
     });
 
     nextBtn.addEventListener('click', (ev) => {

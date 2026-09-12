@@ -111,7 +111,7 @@ Core implementation details:
 - Cart changes update the header counter and the currently open cart modal.
 - Checkout event handlers are registered once in `main.ts`, so opening checkout repeatedly does not duplicate subscriptions.
 - Successful checkout clears the cart and buyer data, then renders `SuccessView`.
-- If the order API is unavailable, the app shows the success modal with the locally calculated cart total so the offline demo flow remains complete.
+- Failed checkout keeps the cart and buyer data, then shows an error message in the contacts form so the user can retry.
 
 ## API / Data Flow
 
@@ -150,7 +150,8 @@ Checkout flow:
 4. Step 2 collects email and phone.
 5. `main.ts` builds an `IOrder` object.
 6. `LarekApi.postOrder()` sends the order with a timeout.
-7. `SuccessView` is rendered with server total or local cart total.
+7. On success, `SuccessView` is rendered and the cart/buyer data are cleared.
+8. On failure or timeout, the contacts form displays an error and keeps the current cart and buyer data.
 
 Main data types are defined in `src/types/index.ts`:
 
@@ -202,9 +203,9 @@ npm run type-check
 
 ## Known Limitations
 
-- The external API may be unavailable from some environments. The app has timeouts and fallback data so the catalog and checkout demo still work.
+- The external API may be unavailable from some environments. The catalog has timeout-based fallback data so browsing remains available.
 - Local fallback data currently contains only a small subset of products.
-- The order success modal may use the locally calculated total when the order API times out.
+- Checkout requires a successful order API response. If the request fails or times out, the app shows an error and keeps the order data for retry.
 - There are no automated UI tests in the project.
 - No production deployment URL is configured yet.
 

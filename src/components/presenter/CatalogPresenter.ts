@@ -12,13 +12,6 @@ export class CatalogPresenter {
     private events: IEvents
 ) {
     this.events.on(EVENTS.CATALOG_CHANGED, this.updateView.bind(this));
-
-    // реакция на превью продукта
-    this.events.on(EVENTS.PRODUCT_PREVIEW, (item?: IShopItem) => {
-        if (!item) return;
-        // УПРОЩЕНО: больше не нужно устанавливать выбранный продукт
-        // this.model.setSelectedProduct(item.id); - удалено
-    });
 }
 
 private updateView() {
