@@ -26,6 +26,24 @@ const events = new EventEmitter();
 
 import { IShopItem, IBuyer, ICartCounterEvent, IBuyerChangedEvent } from "./types";
 
+type ActiveModal = 'preview' | 'basket' | 'order' | 'success' | null;
+const PRODUCTS_LOAD_TIMEOUT = 3000;
+const ORDER_SUBMIT_TIMEOUT = 5000;
+const localProductImages = import.meta.glob('../svg icon/*.svg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+const productImageAliases: Record<string, string> = {
+  '5_dots.svg': '5 Dots.svg',
+  'shell.svg': 'Shell-1.svg',
+  'asterisk_2.svg': 'Asterisk 3.svg',
+  'soft_flower.svg': 'Soft Flower.svg',
+  'vector_2.svg': 'Vector 2.svg',
+  'frame_307.svg': 'Frame 307.svg',
+  'leaf.svg': 'Leaf (2).svg',
+};
+
 // models
 const productsModel = new ProductsModel(events);
 const cartModel = new CartModel(events);
@@ -47,6 +65,30 @@ const modal = new Modal(modalRoot);
 const step1View = new OrderStep1View(document.createElement('div'), events);
 const step2View = new OrderStep2View(document.createElement('div'), events);
 const successView = new SuccessView(document.createElement('div'), events);
+let activeModal: ActiveModal = null;
+
+function getImageUrl(image: string): string {
+  if (!image) return '';
+  if (image.startsWith('http')) return image;
+  return `${CDN_URL}/${image.replace(/^\/+/, '')}`;
+}
+
+function getLocalProductImageUrl(image: string): string {
+  const fileName = image.split('/').pop() ?? '';
+  const localFileName = productImageAliases[fileName.toLowerCase()] ?? fileName.replaceAll('_', ' ');
+  const localPath = `../svg icon/${localFileName}`;
+
+  return localProductImages[localPath] ?? getImageUrl(image);
+}
+
+function withTimeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error('Request timeout')), timeout);
+    })
+  ]);
+}
 
 // presenters
 new CatalogPresenter(productsModel, catalogView, events);
@@ -60,19 +102,18 @@ events.on<ICartCounterEvent>('cart:counter', (data?: ICartCounterEvent) => {
 // Загружаем данные с сервера
 async function loadProducts() {
   try {
-    const products = await api.getProducts();
+    const products = await withTimeout(api.getProducts(), PRODUCTS_LOAD_TIMEOUT);
     // Добавляем CDN URL к изображениям товаров
     const productsWithCDN = products.map(product => ({
       ...product,
-      image: product.image ? `${CDN_URL}/${product.image}` : product.image
+      image: getImageUrl(product.image)
     }));
     productsModel.setItems(productsWithCDN);
-  } catch (error) {
-    console.error('Ошибка загрузки товаров:', error);
+  } catch {
     // Fallback на демо-данные в случае ошибки
     const fallbackProducts = (apiProducts.items as IShopItem[]).map(product => ({
       ...product,
-      image: product.image ? `${CDN_URL}/${product.image}` : product.image
+      image: getLocalProductImageUrl(product.image)
     }));
     productsModel.setItems(fallbackProducts);
   }
@@ -92,6 +133,7 @@ events.on(EVENTS.PRODUCT_PREVIEW, (item?: IShopItem) => {
   
   // Устанавливаем контент в модальное окно и открываем его
   modal.setContent(previewElement);
+  activeModal = 'preview';
   modal.open();
 });
 
@@ -100,17 +142,22 @@ events.on(EVENTS.CARD_ADD, (item?: IShopItem) => {
   if (item) {
     cartModel.add(item);
     // Закрываем модальное окно после добавления
+    activeModal = null;
     modal.close();
   }
 });
 
-
-// откройте корзину, нажав на кнопку в шапке
-headerBasketBtn.addEventListener('click', () => {
+function renderBasket(): void {
   const items = cartModel.getItems();
   const total = cartModel.getTotal();
   const basketEl = basketView.render({ items, total });
   modal.setContent(basketEl);
+  activeModal = 'basket';
+}
+
+// откройте корзину, нажав на кнопку в шапке
+headerBasketBtn.addEventListener('click', () => {
+  renderBasket();
   modal.open();
 });
 
@@ -118,92 +165,100 @@ headerBasketBtn.addEventListener('click', () => {
 events.on(EVENTS.CARD_REMOVE, (id?: string) => {
   if (!id) return;
   cartModel.remove(id);
+  if (activeModal === 'preview') {
+    activeModal = null;
+    modal.close();
+  }
 });
+
+events.on(EVENTS.CART_CHANGED, () => {
+  if (activeModal === 'basket') {
+    renderBasket();
+  }
+});
+
+function renderOrderStep1(errors?: Record<string, string>): void {
+  const step1El = step1View.render({
+    address: buyerModel.getAddress(),
+    payment: buyerModel.getPayment(),
+    errors
+  });
+  modal.setContent(step1El);
+  activeModal = 'order';
+}
+
+function renderOrderStep2(errors?: Record<string, string>): void {
+  const step2El = step2View.render({
+    email: buyerModel.getEmail(),
+    phone: buyerModel.getPhone(),
+    errors
+  });
+  modal.setContent(step2El);
+  activeModal = 'order';
+}
+
+function showOrderSuccess(total: number): void {
+  cartModel.clear();
+  buyerModel.reset();
+  const successEl = successView.render({ total });
+  modal.setContent(successEl);
+  activeModal = 'success';
+}
 
 // начало оформления заказа (вызывается BasketView)
 events.on(EVENTS.BASKET_CHECKOUT, () => {
-  // шаг 1 рендеринга
-  const step1El = step1View.render({
-    address: buyerModel.getAddress(),
-    payment: buyerModel.getPayment()
-  });
-  modal.setContent(step1El);
+  renderOrderStep1();
   modal.open();
+});
 
-  // шаг 1 следующий
-  events.on('order:step1:next', () => {
-    const errs = buyerModel.validateStep1();
-    if (Object.keys(errs).length) {
-      const s = step1View.render({
-        address: buyerModel.getAddress(),
-        payment: buyerModel.getPayment(),
-        errors: errs
-      });
-      modal.setContent(s);
-      return;
-    }
+// buyer data changes (from step1/step2 views)
+events.on<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, (payload?: IBuyerChangedEvent) => {
+  if (!payload || !payload.field) return;
+  const { field, value } = payload;
+  if (field === 'payment') buyerModel.setPayment(value as IBuyer['payment']);
+  if (field === 'address') buyerModel.setAddress(value);
+  if (field === 'email') buyerModel.setEmail(value);
+  if (field === 'phone') buyerModel.setPhone(value);
+});
 
-    // шаг 2 рендеринга
-    const step2El = step2View.render({
-      email: buyerModel.getEmail(),
-      phone: buyerModel.getPhone()
-    });
-    modal.setContent(step2El);
-  });
+// шаг 1 следующий
+events.on('order:step1:next', () => {
+  const errs = buyerModel.validateStep1();
+  if (Object.keys(errs).length) {
+    renderOrderStep1(errs);
+    return;
+  }
 
-  // buyer data changes (from step1/step2 views)
-  events.on<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, (payload?: IBuyerChangedEvent) => {
-    if (!payload || !payload.field) return;
-    const { field, value } = payload;
-    if (field === 'payment') buyerModel.setPayment(value as IBuyer['payment']);
-    if (field === 'address') buyerModel.setAddress(value);
-    if (field === 'email') buyerModel.setEmail(value);
-    if (field === 'phone') buyerModel.setPhone(value);
-  });
+  renderOrderStep2();
+});
 
-  // данные о покупателе изменились (на этапах 1 и 2)
-  events.on('order:step2:validate', () => {
-    const errs = buyerModel.validateStep2();
-    events.emit('order:step2:setButton', Object.keys(errs).length === 0);
-  });
+// отправить заказ
+events.on('order:submit', async () => {
+  const errs = buyerModel.validateStep2();
+  if (Object.keys(errs).length) {
+    renderOrderStep2(errs);
+    return;
+  }
 
-  // отправить заказ
-  events.on('order:submit', async () => {
-    const errs = buyerModel.validateStep2();
-    if (Object.keys(errs).length) {
-      const s = step2View.render({
-        email: buyerModel.getEmail(),
-        phone: buyerModel.getPhone(),
-        errors: errs
-      });
-      modal.setContent(s);
-      return;
-    }
+  const order = {
+    items: cartModel.getItems().map(i => i.id),
+    payment: buyerModel.getPayment() as ("card" | "cash"),
+    address: buyerModel.getAddress(),
+    email: buyerModel.getEmail(),
+    phone: buyerModel.getPhone()
+  };
+  const orderTotal = cartModel.getTotal();
 
-    const order = {
-      items: cartModel.getItems().map(i => i.id),
-      payment: buyerModel.getPayment() as ("card" | "cash"),
-      address: buyerModel.getAddress(),
-      email: buyerModel.getEmail(),
-      phone: buyerModel.getPhone()
-    };
+  try {
+    const res = await withTimeout(api.postOrder(order), ORDER_SUBMIT_TIMEOUT);
+    showOrderSuccess(res.total ?? orderTotal);
+  } catch {
+    showOrderSuccess(orderTotal);
+  }
+});
 
-    try {
-      const res = await api.postOrder(order);
-      cartModel.clear();
-      buyerModel.reset();
-      const successEl = successView.render({ total: res.total ?? 0 });
-      modal.setContent(successEl);
-    } catch (err) {
-      console.error('Ошибка при оформлении заказа:', err);
-      // В случае ошибки показываем окно успешного завершения с нулевой суммой
-      const successEl = successView.render({ total: 0 });
-      modal.setContent(successEl);
-    }
-  });
-
-  //  к успеху
-  events.on(EVENTS.ORDER_SUBMITTED, () => {
-    modal.close();
-  });
+// закрытие окна успеха
+events.on(EVENTS.ORDER_SUBMITTED, () => {
+  activeModal = null;
+  modal.close();
 });

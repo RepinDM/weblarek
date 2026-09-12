@@ -20,21 +20,36 @@ export class OrderStep1View extends Component<IBuyer> {
     const cardBtn = el.querySelector<HTMLButtonElement>('button[name="card"]')!;
     const cashBtn = el.querySelector<HTMLButtonElement>('button[name="cash"]')!;
     const nextBtn = el.querySelector<HTMLButtonElement>('.order__button')!;
+    let selectedPayment = buyer.payment ?? '';
 
     addressInput.value = buyer.address ?? '';
 
     if (buyer.payment === 'card') cardBtn.classList.add('button_alt-active');
     if (buyer.payment === 'cash') cashBtn.classList.add('button_alt-active');
 
+    const updateButtonState = () => {
+        nextBtn.disabled = !(selectedPayment && addressInput.value.trim());
+    };
+
+    const updatePaymentState = (payment: IBuyer['payment']) => {
+        selectedPayment = payment;
+        cardBtn.classList.toggle('button_alt-active', payment === 'card');
+        cashBtn.classList.toggle('button_alt-active', payment === 'cash');
+        updateButtonState();
+    };
+
     addressInput.addEventListener('input', () => {
         this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'address', value: addressInput.value });
+        updateButtonState();
     });
 
     cardBtn.addEventListener('click', () => {
+        updatePaymentState('card');
         this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'payment', value: 'card' });
     });
 
     cashBtn.addEventListener('click', () => {
+        updatePaymentState('cash');
         this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'payment', value: 'cash' });
     });
 
@@ -52,7 +67,8 @@ export class OrderStep1View extends Component<IBuyer> {
         errorsContainer.appendChild(d);
     });
 
+    updateButtonState();
+
     return el;
     }
 }
-

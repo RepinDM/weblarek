@@ -23,14 +23,18 @@ export class OrderStep2View extends Component<IBuyer> {
     emailInput.value = buyer.email ?? '';
     phoneInput.value = buyer.phone ?? '';
 
+    const updateButtonState = () => {
+        payBtn.disabled = !(emailInput.value.trim() && phoneInput.value.trim());
+    };
+
     emailInput.addEventListener('input', () => {
         this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'email', value: emailInput.value });
-        this.events?.emit('order:step2:validate');
+        updateButtonState();
     });
 
     phoneInput.addEventListener('input', () => {
         this.events?.emit<IBuyerChangedEvent>(EVENTS.BUYER_CHANGED, { field: 'phone', value: phoneInput.value });
-        this.events?.emit('order:step2:validate');
+        updateButtonState();
     });
 
     payBtn.addEventListener('click', (ev) => {
@@ -47,10 +51,7 @@ export class OrderStep2View extends Component<IBuyer> {
         errorsContainer.appendChild(d);
     });
 
-    // слушаем внешнее событие, чтобы установить состояние кнопки
-    this.events?.on && this.events.on('order:step2:setButton', (enabled?: boolean) => {
-        payBtn.disabled = !enabled;
-    });
+    updateButtonState();
 
     return el;
     }

@@ -4,6 +4,7 @@ import { categoryMap } from "../../utils/constants";
 import type { IShopItem } from "../../types";
 import type { IEvents } from "../base/Events";
 import { EVENTS } from "../base/EventNames";
+import fallbackImage from "../../images/Subtract.svg";
 
 /**
  * CardCatalog — рендерит карточку товара и эмитит событие при клике.
@@ -31,7 +32,11 @@ export class CardCatalog extends Component<IShopItem> {
 
     title.textContent = item.title;
     price.textContent = item.price === null ? 'Бесплатно' : `${item.price} синапсов`;
-    img.src = item.image || '';
+    img.onerror = () => {
+        img.onerror = null;
+        img.src = fallbackImage;
+    };
+    img.src = item.image || fallbackImage;
     img.alt = item.title ?? '';
 
     const modifier = categoryMap[item.category as keyof typeof categoryMap] || 'card__category_other';

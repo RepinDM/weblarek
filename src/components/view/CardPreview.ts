@@ -3,10 +3,12 @@ import { categoryMap } from "../../utils/constants";
 import type { IShopItem } from "../../types";
 import type { IEvents } from "../base/Events";
 import { EVENTS } from "../base/EventNames";
+import fallbackImage from "../../images/Subtract.svg";
 
 export class CardPreview extends Component<IShopItem> {
     private addButton: HTMLButtonElement | null = null;
     private isInCart: boolean = false;
+    private currentItem: IShopItem | null = null;
 
     constructor(container: HTMLElement, private events?: IEvents, private cartItems?: Set<string>) {
         super(container);
@@ -21,6 +23,7 @@ export class CardPreview extends Component<IShopItem> {
             return el;
         }
 
+        this.currentItem = item;
         const title = el.querySelector('.card__title') as HTMLElement;
         const price = el.querySelector('.card__price') as HTMLElement;
         const img = el.querySelector('.card__image') as HTMLImageElement;
@@ -31,7 +34,11 @@ export class CardPreview extends Component<IShopItem> {
         title.textContent = item.title;
         description.textContent = item.description;
         price.textContent = item.price === null ? 'Бесплатно' : `${item.price} синапсов`;
-        img.src = item.image || '';
+        img.onerror = () => {
+            img.onerror = null;
+            img.src = fallbackImage;
+        };
+        img.src = item.image || fallbackImage;
         img.alt = item.title ?? '';
 
         const modifier = categoryMap[item.category as keyof typeof categoryMap] || 'card__category_other';
@@ -58,7 +65,13 @@ export class CardPreview extends Component<IShopItem> {
 
     private updateButtonState(): void {
         if (this.addButton) {
+            if (this.currentItem?.price === null) {
+                this.addButton.textContent = 'Недоступно';
+                this.addButton.disabled = true;
+                return;
+            }
             this.addButton.textContent = this.isInCart ? 'Удалить из корзины' : 'В корзину';
+            this.addButton.disabled = false;
         }
     }
 }

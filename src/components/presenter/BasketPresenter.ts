@@ -15,7 +15,6 @@ export class BasketPresenter {
         private events: IEvents
     ) {
         this.events.on(EVENTS.CART_CHANGED, this.handleCartChange.bind(this));
-        this.events.on(EVENTS.BASKET_OPEN, this.open.bind(this));
     }
 
     private handleCartChange() {
@@ -27,11 +26,6 @@ export class BasketPresenter {
         
         // обновляем счётчик в шапке через глобальное событие
         this.events.emit<ICartCounterEvent>('cart:counter', { count: this.model.getCount() });
-    }
-
-    private open() {
-        // Presenter оповещает, оставил лог в случае необходимости
-        this.events.emit(EVENTS.BASKET_OPEN);
     }
 
     public removeItem(id?: string): void {

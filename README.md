@@ -1,350 +1,224 @@
-# Проектная работа «Веб-Ларёк»
+# Web Larek
 
-## 📖 Описание проекта
+## About
 
-**«Веб-Ларёк»** — учебный проект интернет-магазина для веб-разработчиков.  
-Пользователи могут просматривать каталог товаров, добавлять их в корзину и оформлять заказ с выбором способа оплаты и адресом доставки.  
-Приложение построено по архитектурному паттерну **MVP (Model–View–Presenter)** и написано на **TypeScript** с использованием **Vite** и модульной SCSS-структуры.
+Web Larek is a TypeScript single-page storefront built with Vite. The app shows a product catalog, opens product previews in a modal, manages a cart, and walks the user through a two-step checkout flow.
 
----
+The project is an educational implementation of a small e-commerce interface with a class-based MVP architecture.
 
-## 🧰 Технологии
+## Features
 
-- **HTML5**
-- **SCSS (BEM, модули, миксины)**
-- **TypeScript**
-- **Vite**
-- **ООП / SOLID**
-- **MVP-паттерн**
-- **EventEmitter (событийная модель)**
+- Product catalog loaded from the Web Larek API.
+- Fallback catalog from local demo data when the API is unavailable.
+- Local SVG product icons for fallback data from the `svg icon/` folder.
+- Product preview modal with full description, category, image, price, and cart action.
+- Cart counter in the header.
+- Cart modal with selected products, total price, item removal, and empty-cart state.
+- Two-step checkout:
+  - payment method and delivery address;
+  - email and phone.
+- Form buttons become active only when required fields are filled.
+- Success modal after checkout with the charged total.
+- Modal closing by overlay click and close button.
 
----
+## Architecture
 
-## 📁 Структура проекта
+The app follows MVP.
 
-```
+Model:
+
+- `ProductsModel` stores catalog items and selected product id.
+- `CartModel` stores cart items in a `Map<string, IShopItem>`.
+- `BuyerModel` stores checkout fields and validates the two checkout steps.
+- Models do not work with DOM directly.
+
+View:
+
+- View classes are stored in `src/components/view`.
+- They render DOM from templates in `index.html`.
+- They emit UI events through `EventEmitter`.
+- They do not call the API directly.
+
+Presenter / coordination:
+
+- `CatalogPresenter` listens to catalog changes and renders catalog cards.
+- `BasketPresenter` listens to cart changes and updates cart-related state.
+- `src/main.ts` wires models, views, presenters, API, and app-level event handlers.
+
+Shared base classes:
+
+- `Component<T>` is the base class for UI components.
+- `Api` is the base HTTP client.
+- `EventEmitter` is the application event bus.
+
+## Stack
+
+- TypeScript
+- Vite
+- SCSS
+- HTML templates
+- Class-based OOP
+- MVP
+- Native Fetch API
+
+## My Implementation
+
+Important project files:
+
+```text
 src/
-├── api/                   # Классы для работы с API
-├── components/            # Компоненты интерфейса (View)
-│   ├── base/              # Базовые классы (Component, Api, EventEmitter)
-│   └── Models/            # Модели данных (Model)
-├── images/                # Графические ресурсы
-├── scss/                  # Стили (SCSS, миксины, переменные)
-├── types/                 # Типы данных TypeScript
-├── utils/                 # Вспомогательные файлы и константы
-├── main.ts                # Точка входа приложения
-└── index.html             # Главный HTML-файл
+  components/
+    base/
+      Api.ts
+      Component.ts
+      EventNames.ts
+      Events.ts
+    models/
+      BuyerModel.ts
+      CardModel.ts
+      LarekApi.ts
+      ProductsModel.ts
+    presenter/
+      BasketPresenter.ts
+      CatalogPresenter.ts
+    view/
+      BasketItemView.ts
+      BasketView.ts
+      CardCatalog.ts
+      CardPreview.ts
+      Modal.ts
+      OrderStep1View.ts
+      OrderStep2View.ts
+      SuccessView.ts
+  types/
+    index.ts
+  utils/
+    constants.ts
+    data.ts
+  main.ts
+svg icon/
+  local fallback product icons
 ```
 
----
+Core implementation details:
 
-## ⚙️ Установка и запуск
+- `LarekApi` extends the base `Api` class and exposes `getProducts()` and `postOrder()`.
+- `loadProducts()` uses the API first and falls back to `src/utils/data.ts` after a timeout.
+- Fallback products are matched with local SVG assets using `import.meta.glob('../svg icon/*.svg')`.
+- Product images from the API use the CDN URL from `CDN_URL`.
+- `CardCatalog` and `CardPreview` also have image `onerror` fallbacks.
+- Products with `price: null` cannot be added to the cart and show the disabled `Недоступно` button.
+- Cart changes update the header counter and the currently open cart modal.
+- Checkout event handlers are registered once in `main.ts`, so opening checkout repeatedly does not duplicate subscriptions.
+- Successful checkout clears the cart and buyer data, then renders `SuccessView`.
+- If the order API is unavailable, the app shows the success modal with the locally calculated cart total so the offline demo flow remains complete.
+
+## API / Data Flow
+
+Default API origin:
+
+```text
+https://larek-api.nomoreparties.co
+```
+
+It can be overridden with:
+
+```text
+VITE_API_ORIGIN
+```
+
+Endpoints used by the app:
+
+- `GET /api/weblarek/product` — loads products.
+- `POST /api/weblarek/order` — sends checkout data.
+
+Product loading flow:
+
+1. `main.ts` calls `LarekApi.getProducts()`.
+2. The request is wrapped in a timeout.
+3. If the API responds, product images are converted to CDN URLs.
+4. If the API fails or times out, local `apiProducts` from `src/utils/data.ts` are used.
+5. Fallback image names are mapped to SVG files from `svg icon/`.
+6. `ProductsModel.setItems()` emits `catalog:changed`.
+7. `CatalogPresenter` renders `CardCatalog` elements into `Catalog`.
+
+Checkout flow:
+
+1. User adds products to `CartModel`.
+2. Basket view displays items and total.
+3. Step 1 collects payment method and address.
+4. Step 2 collects email and phone.
+5. `main.ts` builds an `IOrder` object.
+6. `LarekApi.postOrder()` sends the order with a timeout.
+7. `SuccessView` is rendered with server total or local cart total.
+
+Main data types are defined in `src/types/index.ts`:
+
+- `IShopItem`
+- `TPayment`
+- `IBuyer`
+- `IOrder`
+- `IOrderResponse`
+- `ICartCounterEvent`
+- `IBuyerChangedEvent`
+
+## How To Run
+
+Install dependencies:
 
 ```bash
 npm install
-npm run start
 ```
 
-или
+Start the dev server:
 
 ```bash
-yarn
-yarn start
+npm start
 ```
 
-### Сборка проекта
+Alternative dev command:
+
+```bash
+npm run dev
+```
+
+Build:
 
 ```bash
 npm run build
 ```
 
-или
+Preview production build:
 
 ```bash
-yarn build
+npm run preview
 ```
 
----
+Type-check only:
 
-## 🧩 Архитектура проекта
-
-Приложение реализовано по паттерну **MVP (Model–View–Presenter)**.
-
-### **Model**
-Хранит и управляет данными:
-- список товаров (`Products`),
-- содержимое корзины (`Basket`),
-- данные покупателя (`Buyer`).
-
-### **View**
-Отвечает за визуальное отображение данных, модальные окна и пользовательские формы.  
-Компоненты реализованы на основе базового класса `Component`, взаимодействуют через события.
-
-### **Presenter**
-Является посредником между Model и View.  
-Обрабатывает события интерфейса, изменяет модели и обновляет представления.
-
-### **Событийная модель**
-Взаимодействие между слоями осуществляется через `EventEmitter`, реализующий паттерн «Наблюдатель».
-
----
-
-## 📦 Типы данных (`src/types/index.ts`)
-
-```ts
-export interface IShopItem {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  image: string;
-  price: number | null;
-}
-
-export interface IBuyer {
-  payment: "card" | "cash" | "";
-  address: string;
-  email: string;
-  phone: string;
-}
-
-export interface IOrder {
-  items: string[];
-  payment: "card" | "cash";
-  address: string;
-  email: string;
-  phone: string;
-}
-
-export interface IOrderResponse {
-  id: string;
-  total: number;
-}
-
-export type EventName = string | RegExp;
+```bash
+npm run type-check
 ```
 
----
+## Known Limitations
 
-## 🧱 Базовые классы
+- The external API may be unavailable from some environments. The app has timeouts and fallback data so the catalog and checkout demo still work.
+- Local fallback data currently contains only a small subset of products.
+- The order success modal may use the locally calculated total when the order API times out.
+- There are no automated UI tests in the project.
+- No production deployment URL is configured yet.
 
-### `Component`
-Базовый класс для всех UI-компонентов.
+## Screenshots
 
-**Конструктор:**  
-`constructor(container: HTMLElement)`
+Add project screenshots here:
 
-**Методы:**
-- `render(data?: Partial<T>): HTMLElement` — отрисовка компонента;
-- `setImage(element: HTMLImageElement, src: string, alt?: string): void` — установка изображения.
-
----
-
-### `Api`
-Базовый класс для взаимодействия с сервером.
-
-**Методы:**
-- `get(uri: string): Promise<object>` — GET-запрос;
-- `post(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<object>` — POST-запрос;
-- `handleResponse(response: Response): Promise<object>` — проверка ответа сервера.
-
----
-
-### `EventEmitter`
-Реализация паттерна «Наблюдатель» для событийной логики.
-
-**Методы:**
-- `on(event, callback)` — подписка на событие;
-- `emit(event, data)` — генерация события;
-- `trigger(event)` — возврат функции-генератора события.
-
----
-
-## 🗂 Модели данных (`src/components/Models`)
-
-### `Products` — каталог товаров
-- `setItems(items: IShopItem[])` — установка списка товаров  
-- `getItems()` — получение всех товаров  
-- `getItemById(id: string)` — получение товара по ID  
-- `setSelectedItem(item: IShopItem)` — установка выбранного товара  
-- `getSelectedItem()` — получение выбранного товара  
-
----
-
-### `Basket` — корзина покупок
-- `addItem(item: IShopItem)` — добавить товар  
-- `removeItem(item: IShopItem)` — удалить товар  
-- `clear()` — очистить корзину  
-- `getTotal()` — общая сумма  
-- `getCount()` — количество товаров  
-- `hasItem(id: string)` — проверка, есть ли товар  
-
----
-
-### `Buyer` — данные покупателя
-- `setField(field: keyof IBuyer, value: string)` — изменение данных  
-- `getData()` — получение данных покупателя  
-- `clear()` — очистка данных  
-- `validate()` — валидация полей формы  
-
----
-
-## 🌐 Класс API (`src/api/LarekApi.ts`)
-
-```ts
-import { Api } from "../base/Api";
-import type { IShopItem, IOrder, IOrderResponse } from "../../types";
-
-export class LarekApi extends Api {
-  getProducts(): Promise<IShopItem[]> {
-    return this.get("/products") as Promise<IShopItem[]>;
-  }
-
-  postOrder(order: IOrder): Promise<IOrderResponse> {
-    return this.post("/order", order) as Promise<IOrderResponse>;
-  }
-}
+```text
+docs/screenshots/catalog.png
+docs/screenshots/product-preview.png
+docs/screenshots/cart.png
+docs/screenshots/order-success.png
 ```
 
----
+## Demo
 
-## 🧠 Пример использования (`main.ts`)
-
-```ts
-import { LarekApi } from "./api/LarekApi";
-import { Basket } from "./components/Models/Basket";
-import type { IBuyer, IOrder } from "./types";
-
-const api = new LarekApi();
-const basket = new Basket();
-
-// Получение каталога
-api.getProducts().then(products => console.log("Каталог товаров:", products));
-
-// Пример оформления заказа
-const buyerData: IBuyer = {
-  payment: "card",
-  address: "ул. Пушкина, д. 1",
-  email: "user@example.com",
-  phone: "+79001234567",
-};
-
-const order: IOrder = {
-  items: basket.getItems().map(item => item.id),
-  payment: buyerData.payment,
-  address: buyerData.address,
-  email: buyerData.email,
-  phone: buyerData.phone,
-};
-
-api.postOrder(order).then(response => console.log("Заказ отправлен:", response));
-```
-
----
-
-## 🧩 UML-диаграмма (описание)
-
-**Классы:**
-- `Products`, `Basket`, `Buyer` — наследуют общие принципы Model.
-- `Component` — базовый класс для View-компонентов.
-- `LarekApi` — расширяет `Api`.
-- `EventEmitter` — обеспечивает обмен событиями между слоями.
-- `Presenter` — связывает Model и View, управляет состоянием.
-
-```
-+--------------------+
-|     Presenter      |
-+--------------------+
-| - models           |
-| - views            |
-| - api              |
-+--------------------+
-| + init()           |
-| + handleEvents()   |
-+--------------------+
-        ↑
-        │
-+---------------+      +-----------------+
-|    Models     |      |      Views      |
-+---------------+      +-----------------+
-| Products      |      | CatalogView     |
-| Basket        |      | ModalView       |
-| Buyer         |      | FormView        |
-+---------------+      +-----------------+
-        ↑                     ↑
-        └────── EventEmitter ─┘
-```
-
----
-
-## ✅ Критерии готовности проекта
-
-- Проект собирается и запускается через `npm start`.
-- Каталог товаров загружается с сервера.
-- Корзина корректно считает количество и сумму.
-- Формы заказов проходят валидацию.
-- Заказ отправляется на сервер.
-- Код написан на TypeScript.
-- Архитектура соответствует паттерну MVP.
-- Есть описание классов, API, типов данных и событий.
-
----
-
-## 🔧 Исправления и улучшения
-
-### **Версия 2.0** - Исправления по замечаниям ревьюера
-
-#### **API и загрузка данных:**
-- ✅ Исправлен API запрос продуктов (`/products` вместо `/product`)
-- ✅ Упрощена структура ответа API (прямой массив вместо `{items: []}`)
-- ✅ Добавлена обработка CDN URL для изображений товаров
-- ✅ Улучшена обработка ошибок загрузки с fallback на демо-данные
-
-#### **Архитектурные улучшения:**
-- ✅ Устранен бесконечный цикл событий в `CatalogPresenter`
-- ✅ Добавлено новое событие `PRODUCT_PREVIEW` для открытия превью товара
-- ✅ Исправлена архитектура корзины - убрано создание классов внутри presenter
-- ✅ Улучшена передача данных между компонентами
-
-#### **Событийная модель:**
-- ✅ Добавлено событие `EVENTS.PRODUCT_PREVIEW` для корректной работы превью
-- ✅ Исправлена логика событий в `ProductsModel.setSelectedProduct()`
-- ✅ Улучшена обработка событий в `BasketPresenter`
-
-#### **Компоненты View:**
-- ✅ Исправлена передача индекса в `BasketItemView` через параметры render
-- ✅ Улучшена архитектура `BasketView` - убрана прямая работа с DOM
-- ✅ Оптимизирована работа с шаблонами и событиями
-
-#### **Типизация:**
-- ✅ Улучшена типизация для `BasketItemView` с поддержкой индекса
-- ✅ Добавлены типы для событий корзины и покупателя
-- ✅ Улучшена типизация API методов
-
-### **Технические улучшения:**
-- 🚀 **Производительность**: Оптимизирована работа с DOM
-- 🛡️ **Надежность**: Улучшена обработка ошибок
-- 🧹 **Чистота кода**: Убраны дублирования и улучшена архитектура
-- 📦 **Размер сборки**: 13.28 kB JS (gzip: 4.35 kB)
-
-### **Статистика проекта:**
-```
-📊 Сборка: 264ms
-📦 JavaScript: 13.28 kB (gzip: 4.35 kB)
-🎨 CSS: 33.18 kB (gzip: 8.68 kB)
-🔧 Модули: 24
-✅ Ошибки линтера: 0
-```
-
----
-
-## 🎯 Результат
-
-Проект полностью соответствует требованиям MVP архитектуры, все замечания ревьюера устранены, код оптимизирован и готов к продакшену.
-
----
-
-## 👨‍💻 
-
-**Студент Яндекс Практикума**  
-Проект выполнен в рамках курса «Фронтенд-разработчик».
+No deployed demo is configured yet.
