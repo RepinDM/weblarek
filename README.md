@@ -1,5 +1,7 @@
 # Web Larek
 
+**Live Demo:** https://weblarek-zeta.vercel.app/
+
 ## About
 
 Web Larek is a TypeScript single-page storefront built with Vite. The app shows a product catalog, opens product previews in a modal, manages a cart, and walks the user through a two-step checkout flow.
@@ -207,7 +209,7 @@ npm run type-check
 - Local fallback data currently contains only a small subset of products.
 - Checkout requires a successful order API response. If the request fails or times out, the app shows an error and keeps the order data for retry.
 - There are no automated UI tests in the project.
-- No production deployment URL is configured yet.
+
 
 ## Screenshots
 
