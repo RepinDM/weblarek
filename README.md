@@ -213,15 +213,20 @@ npm run type-check
 
 ## Screenshots
 
-Add project screenshots here:
+### Product Catalog
 
-```text
-docs/screenshots/catalog.png
-docs/screenshots/product-preview.png
-docs/screenshots/cart.png
-docs/screenshots/order-success.png
-```
+![Web Larek product catalog](docs/screenshots/catalog.png)
 
-## Demo
+### Product Preview
 
-No deployed demo is configured yet.
+![Web Larek product preview](docs/screenshots/product-preview.png)
+
+### Cart
+
+![Web Larek cart](docs/screenshots/cart.png)
+
+### Checkout
+
+![Web Larek checkout](docs/screenshots/checkout.png)
+
+
